@@ -204,6 +204,27 @@ void Window::setGpuMode(const char* mode)
         strcat(new_str, cmd);
         strcat(new_str, mode);
     }
-    std::cout << executeCmd(new_str).c_str();
+
+    std::string out = executeCmd(new_str);
+    std::cout << out.c_str();
+    
     setTrayIcon();
+
+    trayIcon->showMessage(
+        tr("Mode changed successfully"),
+        tr(out.c_str()),
+        QSystemTrayIcon::Information,
+        5000
+    );
+
+    if(out.find("Required") != std::string::npos) {
+        QMessageBox::information(
+            this, 
+            tr("User action required"), 
+            tr(
+                "Restart your computer or type this to the terminal: \n\n"
+                "sudo systemctl restart display-manager"
+            )
+        );
+    }
 }
