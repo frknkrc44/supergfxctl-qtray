@@ -10,11 +10,9 @@
 #ifndef __MY_WINDOW_H__
 #define __MY_WINDOW_H__
 
-#include <QSystemTrayIcon>
-
 #include <QDialog>
+#include <QSystemTrayIcon>
 #include <QThreadPool>
-#include <list>
 
 QT_BEGIN_NAMESPACE
 class QAction;
@@ -27,7 +25,6 @@ class QMenu;
 class QPushButton;
 class QSpinBox;
 class QTextEdit;
-class QThreadPool;
 class QRunnable;
 QT_END_NAMESPACE
 

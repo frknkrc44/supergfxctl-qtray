@@ -31,7 +31,6 @@ set(supergfxctl-qtray_resource_files
     "images/dgpu-suspended.png"
     "images/gpu-hybrid.png"
     "images/gpu-integrated.png"
-    "images/gpu-compute.png"
     "images/gpu-vfio.png"
     "images/gpu-egpu.png"
 )
