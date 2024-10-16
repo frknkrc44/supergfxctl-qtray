@@ -1,4 +1,4 @@
-// Copyright (C) 2022 Furkan Karcıoğlu <https://github.com/frknkrc44>
+// Copyright (C) 2022-2024 Furkan Karcıoğlu <https://github.com/frknkrc44>
 //
 // This file is part of SuperGfxCtl-QTray project,
 // and licensed under GNU Affero General Public License v3.
@@ -13,6 +13,7 @@
 #include <QSystemTrayIcon>
 
 #include <QDialog>
+#include <QThreadPool>
 #include <list>
 
 QT_BEGIN_NAMESPACE
@@ -26,7 +27,10 @@ class QMenu;
 class QPushButton;
 class QSpinBox;
 class QTextEdit;
+class QThreadPool;
+class QRunnable;
 QT_END_NAMESPACE
+
 
 class Window : public QDialog
 {
@@ -36,6 +40,7 @@ public:
     Window();
 
     void setVisible(bool visible) override;
+    void setTrayIcon();
 
 protected:
     void closeEvent(QCloseEvent *event) override;
@@ -48,15 +53,10 @@ private:
     void createTrayIcon();
     std::string executeCmd(const char* cmd);
     std::string getGPUStatus();
+    std::string getGPUPower();
     std::list<std::string> getSupportedGPUModes();
 
-    void setGpuModeIntegrated();
-    void setGpuModeHybrid();
-    void setGpuModeCompute();
-    void setGpuModeVfio();
-    void setGpuModeEgpu();
     void setGpuMode(const char* mode);
-    void setTrayIcon();
 
     QSystemTrayIcon *trayIcon;
     QMenu *trayIconMenu;
@@ -68,6 +68,22 @@ private:
     const char* GPU_STATUS_EGPU             = "AsusEgpu";
     const char* GPU_STATUS_DISCRETE         = "AsusMuxDgpu";
     const char* GPU_STATUS_NONE             = "Unknown";
+
+    const char* POWER_STATUS_ACTIVE         = "active";
+    const char* POWER_STATUS_SUSPENDED      = "suspended";
+    const char* POWER_STATUS_OFF            = "off";
+    const char* POWER_STATUS_DGPU_DISABLED  = "dgpu_disabled";
+    const char* POWER_STATUS_MUX_DISCREET   = "asus_mux_discreet";
+    const char* POWER_STATUS_UNKNOWN        = GPU_STATUS_NONE;
+};
+
+class RefreshTask : public QRunnable
+{
+public:
+    RefreshTask(Window* window);
+    void run() override;
+    Window* usedWindow;
+
 };
 
 #endif

@@ -1,4 +1,4 @@
-// Copyright (C) 2022 Furkan Karcıoğlu <https://github.com/frknkrc44>
+// Copyright (C) 2022-2024 Furkan Karcıoğlu <https://github.com/frknkrc44>
 //
 // This file is part of SuperGfxCtl-QTray project,
 // and licensed under GNU Affero General Public License v3.
@@ -7,10 +7,12 @@
 // All rights reserved. See COPYING, AUTHORS.
 //
 
-#include <iostream>
-#include <cstring>
-#include <string>
 #include <algorithm>
+#include <chrono>
+#include <cstring>
+#include <iostream>
+#include <string>
+#include <thread>
 
 #include "window.h"
 
@@ -25,6 +27,19 @@ const char* appendStr(const char* s, const char* append) {
     strcpy(new_str, s);
     strcat(new_str, append);
     return reinterpret_cast<const char*>(new_str);
+}
+
+RefreshTask::RefreshTask(Window* window)
+{
+    usedWindow = window;
+}
+
+void RefreshTask::run()
+{
+    while (true) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(30000));
+        usedWindow->setTrayIcon();
+    }
 }
 
 std::string Window::executeCmd(const char* cmd) {
@@ -48,6 +63,12 @@ std::string Window::executeCmd(const char* cmd) {
 
     }
     return result;
+}
+
+std::string Window::getGPUPower()
+{
+    std::string out = executeCmd("supergfxctl -S");
+    return out.replace(out.find("\n"), 1, "");
 }
 
 std::string Window::getGPUStatus()
@@ -84,6 +105,8 @@ void Window::closeEvent(QCloseEvent *event)
 Window::Window()
 {
     createTrayIcon();
+
+    trayIcon->setToolTip(tr("SuperGfxCtl"));
 
     connect(trayIcon, &QSystemTrayIcon::messageClicked, this, &Window::messageClicked);
     connect(trayIcon, &QSystemTrayIcon::activated, this, &Window::iconActivated);
@@ -130,18 +153,23 @@ void Window::createTrayIcon()
 
 void Window::setTrayIcon()
 {
-    const char* status = getGPUStatus().c_str();
+    auto status = getGPUStatus();
+    auto power = getGPUPower();
 
-    std::cout << "Enabled mode: " << status << std::endl;
+    std::cout << "Enabled mode: " << status << " Power mode: " << power << std::endl;
 
-    if(strcmp(status, GPU_STATUS_HYBRID) == 0) {
-        trayIcon->setIcon(QIcon(":/images/gpu-hybrid.png"));
-    } else if(strcmp(status, GPU_STATUS_VFIO) == 0) {
-        trayIcon->setIcon(QIcon(":/images/gpu-vfio.png"));
-    } else if(strcmp(status, GPU_STATUS_EGPU) == 0) {
-        trayIcon->setIcon(QIcon(":/images/gpu-egpu.png"));
+    if (strcmp(power.c_str(), POWER_STATUS_SUSPENDED) == 0) {
+        trayIcon->setIcon(QIcon(":/images/dgpu-suspended.png"));
     } else {
-        trayIcon->setIcon(QIcon(":/images/gpu-integrated.png"));
+        if(strcmp(status.c_str(), GPU_STATUS_HYBRID) == 0) {
+            trayIcon->setIcon(QIcon(":/images/gpu-hybrid.png"));
+        } else if(strcmp(status.c_str(), GPU_STATUS_VFIO) == 0) {
+            trayIcon->setIcon(QIcon(":/images/gpu-vfio.png"));
+        } else if(strcmp(status.c_str(), GPU_STATUS_EGPU) == 0) {
+            trayIcon->setIcon(QIcon(":/images/gpu-egpu.png"));
+        } else {
+            trayIcon->setIcon(QIcon(":/images/gpu-integrated.png"));
+        }
     }
 }
 

@@ -1,4 +1,4 @@
-# Copyright (C) 2022 Furkan Karcıoğlu <https://github.com/frknkrc44>
+# Copyright (C) 2022-2024 Furkan Karcıoğlu <https://github.com/frknkrc44>
 #
 # This file is part of SuperGfxCtl-QTray project,
 # and licensed under GNU Affero General Public License v3.
@@ -28,6 +28,7 @@ target_link_libraries(supergfxctl-qtray PUBLIC
 )
 
 set(supergfxctl-qtray_resource_files
+    "images/dgpu-suspended.png"
     "images/gpu-hybrid.png"
     "images/gpu-integrated.png"
     "images/gpu-compute.png"
