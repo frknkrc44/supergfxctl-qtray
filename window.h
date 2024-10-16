@@ -58,23 +58,16 @@ private:
     void setGpuMode(const char* mode);
     void setTrayIcon();
 
-    QAction *integratedAction;
-    QAction *hybridAction;
-    QAction *computeAction;
-    QAction *vfioAction;
-    QAction *egpuAction;
-    QAction *quitAction;
-
     QSystemTrayIcon *trayIcon;
     QMenu *trayIconMenu;
 
-    const char* GPU_STATUS_INTEGRATED = "integrated";
-    const char* GPU_STATUS_HYBRID     = "hybrid";
-    const char* GPU_STATUS_COMPUTE    = "compute";
-    const char* GPU_STATUS_VFIO       = "vfio";
-    const char* GPU_STATUS_EGPU       = "egpu";
-    const char* GPU_STATUS_DISCRETE   = "asus_mux_discreet";
-    const char* GPU_STATUS_NONE       = "none";
+    const char* GPU_STATUS_INTEGRATED       = "Integrated";
+    const char* GPU_STATUS_HYBRID           = "Hybrid";
+    const char* GPU_STATUS_NVIDIA_NOMODESET = "NvidiaNoModeset";
+    const char* GPU_STATUS_VFIO             = "Vfio";
+    const char* GPU_STATUS_EGPU             = "AsusEgpu";
+    const char* GPU_STATUS_DISCRETE         = "AsusMuxDgpu";
+    const char* GPU_STATUS_NONE             = "Unknown";
 };
 
 #endif

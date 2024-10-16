@@ -20,6 +20,13 @@
 #include <QMenu>
 #include <QMessageBox>
 
+const char* appendStr(const char* s, const char* append) {
+    char* new_str = (char*) malloc(sizeof(char) * (strlen(s) + strlen(append) + 1));
+    strcpy(new_str, s);
+    strcat(new_str, append);
+    return reinterpret_cast<const char*>(new_str);
+}
+
 std::string Window::executeCmd(const char* cmd) {
     std::array<char, 128> buffer;
     std::string result;
@@ -52,7 +59,7 @@ std::string Window::getGPUStatus()
 std::list<std::string> Window::getSupportedGPUModes()
 {
     std::string out = executeCmd("supergfxctl -s");
-    out = out.replace(out.find("\n"), 1, "").replace(out.find("["), 1, "").replace(out.find("]"), 1, "");
+    out = out.substr(1, out.size() - 3);
     std::list<std::string> modes;
 
     size_t pos = 0;
@@ -92,57 +99,28 @@ void Window::messageClicked()
 {
 }
 
-char asciitolower(char in) {
-    if (in <= 'Z' && in >= 'A')
-        return in - ('Z' - 'z');
-    return in;
-}
-
 void Window::createTrayIcon()
 {
     trayIconMenu = new QMenu(this);
 
     std::cout << "Supported modes: " << std::endl;
-    for (auto const& i : getSupportedGPUModes()) {
-        std::string mode(i.begin(), i.end());
-        std::transform(mode.begin(), mode.end(), mode.begin(), asciitolower);
+    for (auto const& mode : getSupportedGPUModes()) {
+        const char* mode_c = mode.c_str();
+        const char* mode_display_c = appendStr(mode_c, "");
+        std::cout << mode_c << std::endl;
 
-        std::cout << mode.c_str() << std::endl;
-
-        if(strcmp(mode.c_str(), GPU_STATUS_INTEGRATED) == 0) {
-            integratedAction = new QAction(tr("&Integrated"), this);
-            connect(integratedAction, &QAction::triggered, this, &Window::setGpuModeIntegrated);
-            trayIconMenu->addAction(integratedAction);
+        if (strcmp(mode_c, "Asus") == 0) {
+            mode_display_c += 4;
         }
 
-        if(strcmp(mode.c_str(), GPU_STATUS_HYBRID) == 0) {
-            hybridAction = new QAction(tr("&Hybrid"), this);
-            connect(hybridAction, &QAction::triggered, this, &Window::setGpuModeHybrid);
-            trayIconMenu->addAction(hybridAction);
-        }
-
-        if(strcmp(mode.c_str(), GPU_STATUS_COMPUTE) == 0) {
-            computeAction = new QAction(tr("&Compute"), this);
-            connect(computeAction, &QAction::triggered, this, &Window::setGpuModeCompute);
-            trayIconMenu->addAction(computeAction);
-        }
-
-        if(strcmp(mode.c_str(), GPU_STATUS_VFIO) == 0) {
-            vfioAction = new QAction(tr("&Vfio"), this);
-            connect(vfioAction, &QAction::triggered, this, &Window::setGpuModeVfio);
-            trayIconMenu->addAction(vfioAction);
-        }
-
-        if(strcmp(mode.c_str(), GPU_STATUS_EGPU) == 0) {
-            egpuAction = new QAction(tr("&Egpu"), this);
-            connect(egpuAction, &QAction::triggered, this, &Window::setGpuModeEgpu);
-            trayIconMenu->addAction(egpuAction);
-        }
+        QAction *action = new QAction(tr(appendStr("&", mode_display_c)), this);
+        connect(action, &QAction::triggered, this, [=](){ setGpuMode(mode_c); });
+        trayIconMenu->addAction(action);
     }
 
     trayIconMenu->addSeparator();
 
-    quitAction = new QAction(tr("&Quit"), this);
+    QAction *quitAction = new QAction(tr("&Quit"), this);
     connect(quitAction, &QAction::triggered, qApp, &QCoreApplication::quit);
     trayIconMenu->addAction(quitAction);
 
@@ -157,55 +135,20 @@ void Window::setTrayIcon()
 
     std::cout << "Enabled mode: " << status << std::endl;
 
-    if(strcmp(status, GPU_STATUS_INTEGRATED) == 0) {
-        trayIcon->setIcon(QIcon(":/images/gpu-integrated.png"));
-    } else if(strcmp(status, GPU_STATUS_HYBRID) == 0) {
+    if(strcmp(status, GPU_STATUS_HYBRID) == 0) {
         trayIcon->setIcon(QIcon(":/images/gpu-hybrid.png"));
-    } else if(strcmp(status, GPU_STATUS_COMPUTE) == 0) {
-        trayIcon->setIcon(QIcon(":/images/gpu-compute.png"));
     } else if(strcmp(status, GPU_STATUS_VFIO) == 0) {
         trayIcon->setIcon(QIcon(":/images/gpu-vfio.png"));
     } else if(strcmp(status, GPU_STATUS_EGPU) == 0) {
         trayIcon->setIcon(QIcon(":/images/gpu-egpu.png"));
+    } else {
+        trayIcon->setIcon(QIcon(":/images/gpu-integrated.png"));
     }
-}
-
-void Window::setGpuModeIntegrated()
-{
-    setGpuMode(GPU_STATUS_INTEGRATED);
-}
-
-void Window::setGpuModeHybrid()
-{
-    setGpuMode(GPU_STATUS_HYBRID);
-}
-
-void Window::setGpuModeCompute()
-{
-    setGpuMode(GPU_STATUS_COMPUTE);
-}
-
-void Window::setGpuModeVfio()
-{
-    setGpuMode(GPU_STATUS_VFIO);
-}
-
-void Window::setGpuModeEgpu()
-{
-    setGpuMode(GPU_STATUS_EGPU);
 }
 
 void Window::setGpuMode(const char* mode)
 {
-    const char* cmd = "supergfxctl -m ";
-    char* new_str;
-    if((new_str = (char*) malloc(strlen(cmd)+strlen(mode)+1)) != NULL){
-        new_str[0] = '\0';
-        strcat(new_str, cmd);
-        strcat(new_str, mode);
-    }
-
-    std::string out = executeCmd(new_str);
+    std::string out = executeCmd(appendStr("supergfxctl -m ", mode));
     std::cout << out.c_str();
     
     setTrayIcon();
@@ -221,10 +164,7 @@ void Window::setGpuMode(const char* mode)
         QMessageBox::information(
             this, 
             tr("User action required"), 
-            tr(
-                "Restart your computer or type this to the terminal: \n\n"
-                "sudo systemctl restart display-manager"
-            )
+            tr(out.c_str())
         );
     }
 }
