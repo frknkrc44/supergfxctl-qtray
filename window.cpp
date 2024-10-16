@@ -105,16 +105,15 @@ void Window::createTrayIcon()
 
     std::cout << "Supported modes: " << std::endl;
     for (auto const& mode : getSupportedGPUModes()) {
-        const char* mode_c = mode.c_str();
-        const char* mode_display_c = appendStr(mode_c, "");
-        std::cout << mode_c << std::endl;
+        const char* mode_display_c = appendStr(mode.c_str(), "");
+        std::cout << mode_display_c << std::endl;
 
-        if (strcmp(mode_c, "Asus") == 0) {
+        if (strcmp(mode_display_c, "Asus") == 0) {
             mode_display_c += 4;
         }
 
         QAction *action = new QAction(tr(appendStr("&", mode_display_c)), this);
-        connect(action, &QAction::triggered, this, [=](){ setGpuMode(mode_c); });
+        connect(action, &QAction::triggered, this, [=](){ setGpuMode(mode.c_str()); });
         trayIconMenu->addAction(action);
     }
 
